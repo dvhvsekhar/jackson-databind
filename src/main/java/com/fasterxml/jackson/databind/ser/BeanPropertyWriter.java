@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.EnumSet;
 import java.util.HashMap;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.impl.PropertySerializerMap;
 import com.fasterxml.jackson.databind.ser.impl.UnwrappingBeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
+import com.fasterxml.jackson.databind.ser.std.EnumSetSerializer;
 import com.fasterxml.jackson.databind.util.Annotations;
 import com.fasterxml.jackson.databind.util.ClassUtil;
 import com.fasterxml.jackson.databind.util.NameTransformer;
@@ -702,7 +704,10 @@ public class BeanPropertyWriter extends PropertyWriter // which extends
         }
         // then find serializer to use
         JsonSerializer<Object> ser = _serializer;
-        if (ser == null) {
+		if (ser == null || (value instanceof EnumSet && ser.getClass() != EnumSetSerializer.class)) {
+			// if value instance of EnumSet, use EnumSetSerializer for EnumSet instead of
+			// generic CollectionSerializer, since de-serialization uses EnumSetDeserializer,
+			// if property value is of type EnumSet
             Class<?> cls = value.getClass();
             PropertySerializerMap m = _dynamicSerializers;
             ser = m.serializerFor(cls);
